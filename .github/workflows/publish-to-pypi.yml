@@ -1,0 +1,49 @@
+name: Publish Python Package
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Get current version
+      id: get_version
+      run: |
+        VERSION=$(python -c "exec(open('setup.py').read()); print(__version__)")
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Build the package
+      run: |
+        python setup.py sdist bdist_wheel
+
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        pip install twine
+        twine upload dist/*
+
+    - name: Create Git tag
+      if: success()
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git tag -a v${{ env.VERSION }} -m "Release version ${{ env.VERSION }}"
+        git push origin v${{ env.VERSION }}
+
