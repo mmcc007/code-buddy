@@ -77,7 +77,7 @@ def create_snapshot(output_file):
     
 def main():
     parser = argparse.ArgumentParser(description="Code Buddy Assist - Your coding assistant")
-    parser.add_argument('command', help='Command to execute')
+    parser.add_argument('command', help='Command to execute, one of: snapshot, help')
     parser.add_argument('--output', default='project_snapshot_no_images.json', help='Output file name')
     args = parser.parse_args()
 
@@ -87,9 +87,22 @@ def main():
         except ValueError as e:
             print(f"Error: {str(e)}")
             sys.exit(1)
+    elif args.command == 'help':
+        print("""
+Code Buddy Assist - Available Commands:
+
+snapshot                 Creates a structured JSON snapshot of your project, excluding image files.
+                         Example: code-buddy-assist snapshot
+
+snapshot --output FILE   Specifies a custom output file name for the project snapshot.
+                         Example: code-buddy-assist snapshot --output my_project_snapshot.json
+
+help                     Displays this help message.
+                         Example: code-buddy-assist help
+""")
     else:
         print(f"Unknown command: {args.command}")
-        print("Currently, the only valid command is 'snapshot'.")
+        print("Use 'code-buddy-assist help' to see available commands.")
 
 if __name__ == "__main__":
     main()
