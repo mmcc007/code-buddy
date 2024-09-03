@@ -1,9 +1,8 @@
 from setuptools import setup, find_packages
-
-__version__ = "0.2.0"
+from version import __version__
 
 setup(
-    name="code-buddy-assist",
+    name="my_package",
     version=__version__,
     packages=find_packages(),
     entry_points={
