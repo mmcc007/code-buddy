@@ -76,7 +76,7 @@ def create_snapshot(output_file):
     print(f"Project snapshot (excluding image files) has been saved to {output_file}")
     
 def main():
-    parser = argparse.ArgumentParser(description="Code Buddy - Your coding assistant")
+    parser = argparse.ArgumentParser(description="Code Buddy Assist - Your coding assistant")
     parser.add_argument('command', help='Command to execute')
     parser.add_argument('--output', default='project_snapshot_no_images.json', help='Output file name')
     args = parser.parse_args()
