@@ -61,6 +61,12 @@ jobs:
         pip install setuptools wheel
         pip install -r requirements.txt
 
+    - name: Get current version
+      id: get_version
+      run: |
+        VERSION=$(python -c "from version import __version__; print(__version__)")
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
     - name: Build the package
       run: |
         python setup.py sdist bdist_wheel
