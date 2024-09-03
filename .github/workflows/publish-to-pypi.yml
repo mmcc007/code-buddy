@@ -1,12 +1,16 @@
-name: Publish Python Package
+name: Build and Test Python Package
 
 on:
+  pull_request:
+    branches:
+      - '**'  # Triggers on all branches with open PRs
+
   push:
     branches:
-      - master
+      - master  # Triggers on pushes to the main branch
 
 jobs:
-  build-and-publish:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,13 +23,43 @@ jobs:
         python-version: '3.x'
 
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: |
+        pip install setuptools wheel
+        pip install -r requirements.txt
 
     - name: Get current version
       id: get_version
       run: |
-        VERSION=$(python -c "exec(open('setup.py').read()); print(__version__)")
+        VERSION=$(python -c "from version import __version__; print(__version__)")
         echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Build the package
+      run: |
+        python setup.py sdist bdist_wheel
+
+    # - name: Run tests
+    #   run: |
+    #     pip install pytest
+    #     pytest
+
+  publish-and-tag:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install setuptools wheel
+        pip install -r requirements.txt
 
     - name: Build the package
       run: |
@@ -40,10 +74,8 @@ jobs:
         twine upload dist/*
 
     - name: Create Git tag
-      if: success()
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
         git tag -a v${{ env.VERSION }} -m "Release version ${{ env.VERSION }}"
         git push origin v${{ env.VERSION }}
-
