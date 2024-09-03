@@ -21,6 +21,10 @@ Code Buddy Assist is a powerful tool designed to enhance your coding experience 
 
 Code Buddy Assist transforms the way developers interact with AI, creating a personalized coding companion that understands the nuances of your project and can assist at every stage of development.
 
+## Benefits of LLM Independence
+
+Some LLM-based code assistants run into usage limits or restrictions, which can interrupt the development workflow. Since Code Buddy Assist is LLM-independent, it allows you to easily switch to another LLM when running into usage limits or when specific LLM features are needed. This flexibility ensures continuous and uninterrupted coding assistance, adapting to your evolving needs.
+
 ## Installation
 
 To install Code Buddy Assist, run the following command:
