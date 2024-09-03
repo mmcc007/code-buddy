@@ -3,17 +3,26 @@ import json
 import argparse
 import sys
 from git import Repo, InvalidGitRepositoryError, GitCommandError
+from pathlib import Path
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_git_repo(path):
+    """Retrieve the Git repository from the given path."""
     try:
         repo = Repo(path, search_parent_directories=True)
         return repo
     except InvalidGitRepositoryError:
-        raise ValueError("No Git repository found. Please run this command from within a Git repository.")
+        logging.error("No Git repository found. Please run this command from within a Git repository.")
+        raise
     except GitCommandError as e:
-        raise ValueError(f"Git error: {str(e)}")
+        logging.error(f"Git error: {str(e)}")
+        raise
 
 def get_all_files(repo):
+    """Get all files from the Git repository, including untracked files."""
     git_files = set()
     untracked_files = set()
 
@@ -24,7 +33,7 @@ def get_all_files(repo):
             if item.type == 'blob':  # Ensure it's a file
                 git_files.add(item.path)
     else:
-        print("Warning: The repository has no commits. Only untracked files will be included.")
+        logging.warning("The repository has no commits. Only untracked files will be included.")
 
     # Get untracked files
     untracked_files.update(repo.untracked_files)
@@ -34,23 +43,25 @@ def get_all_files(repo):
     return all_files
 
 def is_image_file(filename):
+    """Check if a file is an image based on its extension."""
     image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.yaml'}
-    _, ext = os.path.splitext(filename.lower())
-    return ext in image_extensions
+    return Path(filename).suffix.lower() in image_extensions
 
 def build_structure(root_path, files):
+    """Build a nested dictionary structure representing the project files."""
     structure = {}
     for file_path in files:
         if is_image_file(file_path):
             continue  # Skip image files
-        full_path = os.path.join(root_path, file_path)
+        full_path = Path(root_path) / file_path
         # Ensure the file exists
-        if os.path.isfile(full_path):
-            with open(full_path, 'r', errors='ignore') as f:
-                try:
+        if full_path.is_file():
+            try:
+                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
-                except Exception as e:
-                    content = f"Error reading file: {e}"
+            except Exception as e:
+                logging.error(f"Error reading file {file_path}: {e}")
+                content = f"Error reading file: {e}"
 
             # Split the path to build the nested dictionary
             parts = file_path.split(os.sep)
@@ -62,31 +73,32 @@ def build_structure(root_path, files):
             current_level[parts[-1]] = content
     return structure
 
-def create_snapshot(output_file):
-    root_path = os.getcwd()  # Or specify the path to your project
-    repo = get_git_repo(root_path)
-    
-    all_files = get_all_files(repo)
-    project_structure = build_structure(root_path, all_files)
+def create_snapshot(output_file, root_path=None):
+    """Create a JSON snapshot of the project."""
+    root_path = root_path or os.getcwd()  # Use specified path or current directory
+    try:
+        repo = get_git_repo(root_path)
+        all_files = get_all_files(repo)
+        project_structure = build_structure(root_path, all_files)
 
-    # Output to JSON file
-    with open(output_file, 'w', encoding='utf-8') as json_file:
-        json.dump(project_structure, json_file, indent=4, ensure_ascii=False)
+        # Output to JSON file
+        with open(output_file, 'w', encoding='utf-8') as json_file:
+            json.dump(project_structure, json_file, indent=4, ensure_ascii=False)
 
-    print(f"Project snapshot (excluding image files) has been saved to {output_file}")
-    
+        logging.info(f"Project snapshot (excluding image files) has been saved to {output_file}")
+    except ValueError as e:
+        logging.error(f"Error: {str(e)}")
+        sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="Code Buddy Assist - Your coding assistant")
-    parser.add_argument('command', help='Command to execute, one of: snapshot, help')
+    parser.add_argument('command', help='Command to execute (e.g., snapshot)')
     parser.add_argument('--output', default='project_snapshot_no_images.json', help='Output file name')
+    parser.add_argument('--path', default=None, help='Path to the project root (optional)')
     args = parser.parse_args()
 
     if args.command == 'snapshot':
-        try:
-            create_snapshot(args.output)
-        except ValueError as e:
-            print(f"Error: {str(e)}")
-            sys.exit(1)
+        create_snapshot(args.output, args.path)
     elif args.command == 'help':
         print("""
 Code Buddy Assist - Available Commands:
@@ -97,11 +109,14 @@ snapshot                 Creates a structured JSON snapshot of your project, exc
 snapshot --output FILE   Specifies a custom output file name for the project snapshot.
                          Example: code-buddy-assist snapshot --output my_project_snapshot.json
 
+snapshot --path PATH     Specifies the path to the project root. Defaults to current directory.
+                         Example: code-buddy-assist snapshot --path /path/to/project
+
 help                     Displays this help message.
                          Example: code-buddy-assist help
 """)
     else:
-        print(f"Unknown command: {args.command}")
+        logging.error(f"Unknown command: {args.command}")
         print("Use 'code-buddy-assist help' to see available commands.")
 
 if __name__ == "__main__":
