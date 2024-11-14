@@ -44,14 +44,34 @@ def get_all_files(repo):
 
 def is_image_file(filename):
     """Check if a file is an image based on its extension."""
-    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.yaml'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.yaml', '.woff'}
     return Path(filename).suffix.lower() in image_extensions
+
+# is_file_name: takes a path to a file and returns False if file is excluded, file can be a relative path
+def is_excluded_file_name(file):
+    # List of file names or directories to exclude
+    excluded_files = [
+        'node_modules', 'package-lock.json', 'yarn.lock', '.DS_Store', '.gitignore', '.gitattributes', '.gitmodules', 
+        '.git', '.idea', '.vscode', '.env', '.env.local', '.env.development', '.env.test', '.env.production', 
+        '.env.staging', '.env.local', '.env.*.local', 'npm-debug.log', 'yarn-debug.log', 'yarn-error.log', 'yarn-integrity'
+    ]
+    
+    # Check if the file is in the list of excluded files or in an excluded directory
+    file_name = os.path.basename(file)  # Get the base name of the file
+    for excluded in excluded_files:
+        # Match either the exact file name or a wildcard match (for .env.*)
+        if excluded.startswith('.env.*') and file_name.startswith('.env.') or file_name == excluded:
+            return True
+
+    # If it's not excluded, return False
+    return False
+
 
 def build_structure(root_path, files):
     """Build a nested dictionary structure representing the project files."""
     structure = {}
     for file_path in files:
-        if is_image_file(file_path):
+        if is_image_file(file_path) or is_excluded_file_name(file_path):
             continue  # Skip image files
         full_path = Path(root_path) / file_path
         # Ensure the file exists
