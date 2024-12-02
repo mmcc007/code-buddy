@@ -45,7 +45,9 @@ def get_all_files(repo):
 def is_image_file(filename):
     """Check if a file is an image based on its extension."""
     image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.yaml', '.woff'}
-    return Path(filename).suffix.lower() in image_extensions
+    video_extensions = {'.webm', '.wmv', '.flv', '.ogv', '.mkv', '.avi', '.mov', '.mp4', '.f4v', '.vob', '.nsv', '.roq'}
+    extensions = image_extensions.union(video_extensions)
+    return Path(filename).suffix.lower() in extensions
 
 # is_file_name: takes a path to a file and returns False if file is excluded, file can be a relative path
 def is_excluded_file_name(file):
