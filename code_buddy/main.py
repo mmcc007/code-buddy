@@ -46,7 +46,9 @@ def is_image_file(filename):
     """Check if a file is an image based on its extension."""
     image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.yaml', '.woff'}
     video_extensions = {'.webm', '.wmv', '.flv', '.ogv', '.mkv', '.avi', '.mov', '.mp4', '.f4v', '.vob', '.nsv', '.roq'}
-    extensions = image_extensions.union(video_extensions)
+    audio_extensions = {'.wav', '.mp3', '.aiff', '.ogg', '.flac', '.m4a', '.aac', '.wma', '.mid', '.ape', '.au', '.mpa', '.shn', '.dts', '.adt', '.m4p', '.rmj', '.rm', '.rvb', '.amr', '.8svx', '.dvf', '.wv', '.kar', '.ics', '.nvf', '.obw', '.cfa'}
+    other_extensions = {'.json'}
+    extensions = image_extensions.union(video_extensions).union(audio_extensions).union(other_extensions)
     return Path(filename).suffix.lower() in extensions
 
 # is_file_name: takes a path to a file and returns False if file is excluded, file can be a relative path
